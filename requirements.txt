@@ -1,5 +1,5 @@
 streamlit
-openai
+groq
 streamlit-lottie
 python-dotenv
 requests
