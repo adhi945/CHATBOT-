@@ -1,35 +1,28 @@
 import streamlit as st
-from streamlit_lottie import st_lottie
-import requests
-import openai
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
+from groq import Groq
+import requests
+from streamlit_lottie import st_lottie
 
 # Load environment variables
 load_dotenv()
 
-# Create OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Create Groq client
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-# System prompt to guide the behavior
-system_prompt = """
-You are InfusionAI, an expert agricultural assistant. Answer farmer's questions in simple, clear language.
-Base your advice on crop science, pest management, fertilizers, irrigation, soil health, weather patterns, organic farming methods, and government programs.
-"""
-
-# Bootstrap CSS for better UI
+# Bootstrap CSS
 bootstrap = """
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 """
 
-# Page Configuration
-st.set_page_config(page_title="InfusionAI - Farming Assistant", page_icon="🌾", layout="wide")
+# Streamlit page setup
+st.set_page_config(page_title="InfusionAI - Your Farming Assistant", page_icon="🌾", layout="wide")
 
 # Inject Bootstrap
 st.markdown(bootstrap, unsafe_allow_html=True)
 
-# Load Lottie Animation
+# Load Lottie animation
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -45,26 +38,35 @@ with st.sidebar:
     st.markdown("**Smart Farming Assistant**")
     st.markdown("Ask anything about farming, crops, pests, fertilizers, or machinery!")
     st.markdown("---")
-    st.info("Built with ❤️ using OpenAI and Streamlit")
+    st.info("Built with ❤️ using Groq + Llama 3 + Streamlit")
 
-# Main Content
-st.title("👨‍🌾 Welcome to InfusionAI Farming Chatbot")
-st.markdown("Type your farming question below and get expert advice instantly!")
+# System prompt for the chatbot
+system_prompt = """
+You are InfusionAI, an expert agricultural assistant. 
+Your mission is to give simple, clear, and actionable farming advice to any question. 
+Use your expertise in crops, soil, fertilizers, pests, weather patterns, organic farming, machinery, and government policies.
+Answer in a helpful and friendly manner.
+"""
 
-# User input
-question = st.text_input("💬 Your Question:", placeholder="e.g., How to protect wheat from pests?", key="user_input")
-
-# Initialize session state for chat history
+# Initialize chat history
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Button to send question
+# Main Title
+st.title("👨‍🌾 Welcome to InfusionAI Farming Chatbot")
+
+st.markdown("Type your farming question below and get expert advice instantly!")
+
+# User input
+question = st.text_input("💬 Your Farming Question:")
+
+# Button to ask
 if st.button("Ask InfusionAI 🌱"):
     if question.strip() != "":
-        with st.spinner('InfusionAI is thinking...'):
+        with st.spinner('Thinking... 🌾'):
             try:
                 response = client.chat.completions.create(
-                    model="gpt-4",  # or use "gpt-3.5-turbo" if you prefer cheaper
+                    model="llama3-70b-8192",  # Powerful model!
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": question}
@@ -72,15 +74,16 @@ if st.button("Ask InfusionAI 🌱"):
                     temperature=0.5,
                     max_tokens=500
                 )
-
                 answer = response.choices[0].message.content
+
+                # Save history
                 st.session_state.history.append(("You", question))
                 st.session_state.history.append(("InfusionAI", answer))
 
             except Exception as e:
                 st.error(f"Error: {e}")
 
-# Display chat history
+# Display Chat History
 for role, text in st.session_state.history:
     if role == "You":
         st.markdown(f"<div class='alert alert-primary'><strong>{role}:</strong> {text}</div>", unsafe_allow_html=True)
@@ -89,4 +92,4 @@ for role, text in st.session_state.history:
 
 # Footer
 st.markdown("---")
-st.caption("🌾 InfusionAI - Helping Farmers Grow Better | © 2025")
+st.caption("🌾 InfusionAI - Helping Farmers Grow Better | Powered by Groq & Llama3 | © 2025")
