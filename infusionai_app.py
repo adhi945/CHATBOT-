@@ -4,28 +4,32 @@ import requests
 import openai
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# System prompt to guide AI behavior
+# Create OpenAI client
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# System prompt to guide the behavior
 system_prompt = """
-You are InfusionAI, an expert agricultural assistant. Answer farmer's questions in simple, clear language. 
+You are InfusionAI, an expert agricultural assistant. Answer farmer's questions in simple, clear language.
 Base your advice on crop science, pest management, fertilizers, irrigation, soil health, weather patterns, organic farming methods, and government programs.
 """
 
-# Bootstrap CSS
+# Bootstrap CSS for better UI
 bootstrap = """
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 """
 
-st.set_page_config(page_title="InfusionAI - Your Farming Assistant", page_icon="🌾", layout="wide")
+# Page Configuration
+st.set_page_config(page_title="InfusionAI - Farming Assistant", page_icon="🌾", layout="wide")
 
 # Inject Bootstrap
 st.markdown(bootstrap, unsafe_allow_html=True)
 
-# Lottie animation
+# Load Lottie Animation
 def load_lottieurl(url: str):
     r = requests.get(url)
     if r.status_code != 200:
@@ -34,7 +38,7 @@ def load_lottieurl(url: str):
 
 lottie_agriculture = load_lottieurl("https://assets1.lottiefiles.com/packages/lf20_jcikwtux.json")
 
-# --- Sidebar ---
+# Sidebar
 with st.sidebar:
     st_lottie(lottie_agriculture, height=300)
     st.title("InfusionAI 🌾")
@@ -43,23 +47,24 @@ with st.sidebar:
     st.markdown("---")
     st.info("Built with ❤️ using OpenAI and Streamlit")
 
-# --- Main app ---
+# Main Content
 st.title("👨‍🌾 Welcome to InfusionAI Farming Chatbot")
 st.markdown("Type your farming question below and get expert advice instantly!")
 
 # User input
 question = st.text_input("💬 Your Question:", placeholder="e.g., How to protect wheat from pests?", key="user_input")
 
-# Chat area
+# Initialize session state for chat history
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# Button to send question
 if st.button("Ask InfusionAI 🌱"):
     if question.strip() != "":
-        with st.spinner('Thinking...'):
+        with st.spinner('InfusionAI is thinking...'):
             try:
-                response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                response = client.chat.completions.create(
+                    model="gpt-4",  # or use "gpt-3.5-turbo" if you prefer cheaper
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": question}
@@ -68,7 +73,7 @@ if st.button("Ask InfusionAI 🌱"):
                     max_tokens=500
                 )
 
-                answer = response['choices'][0]['message']['content']
+                answer = response.choices[0].message.content
                 st.session_state.history.append(("You", question))
                 st.session_state.history.append(("InfusionAI", answer))
 
